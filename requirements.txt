@@ -4,6 +4,7 @@ langchain-groq
 langchain-community
 langchain-huggingface
 langchain-chroma
+langchain-text-splitters
 chromadb
 python-dotenv
 pypdf
