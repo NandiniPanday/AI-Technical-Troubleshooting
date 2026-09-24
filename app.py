@@ -456,7 +456,7 @@ def load_embeddings():
 
 
 # ============================================================
-# LOAD EXISTING CHROMA DATABASE
+# LOAD / CREATE CHROMA DATABASE
 # ============================================================
 
 @st.cache_resource
@@ -464,14 +464,45 @@ def load_vector_store():
 
     db_path = Path("chroma_db")
 
-    if not db_path.exists():
-        return None
-
     embeddings = load_embeddings()
 
-    vector_store = Chroma(
-        persist_directory=str(db_path),
-        embedding_function=embeddings
+    # If Chroma database already exists, load it
+    if db_path.exists():
+
+        return Chroma(
+            persist_directory=str(db_path),
+            embedding_function=embeddings
+        )
+
+    # Otherwise create the knowledge base from PDFs
+    from langchain_community.document_loaders import PyPDFLoader
+    from langchain_text_splitters import RecursiveCharacterTextSplitter
+
+    documents = []
+
+    documents_path = Path("documents")
+
+    for pdf_file in documents_path.glob("*.pdf"):
+
+        loader = PyPDFLoader(str(pdf_file))
+        documents.extend(loader.load())
+
+    if not documents:
+        return None
+
+    # Split documents
+    text_splitter = RecursiveCharacterTextSplitter(
+        chunk_size=1000,
+        chunk_overlap=200
+    )
+
+    chunks = text_splitter.split_documents(documents)
+
+    # Create Chroma database
+    vector_store = Chroma.from_documents(
+        documents=chunks,
+        embedding=embeddings,
+        persist_directory=str(db_path)
     )
 
     return vector_store
