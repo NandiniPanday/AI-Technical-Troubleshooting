@@ -2,4 +2,3 @@ venv/
 .env
 __pycache__/
 chroma_db/
-documents/laptop_troubleshooting.pdf
